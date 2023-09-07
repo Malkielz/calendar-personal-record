@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>日历应用</title>
+  <style>
+    /* 样式可以根据需要自行定制 */
+    body {
+      font-family: Arial, sans-serif;
+    }
+    .calendar {
+      width: 300px;
+      margin: 20px auto;
+    }
+    .calendar table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    .calendar th, .calendar td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+    .calendar th {
+      background-color: #f2f2f2;
+    }
+    .calendar td {
+      cursor: pointer;
+      width: 14.28%; /* 100% / 7 */
+    }
+    .calendar .past-day {
+      opacity: 1; /* 设置透明度为百分之100 */
+    }
+    .calendar .today {
+      opacity: 1; /* 设置透明度为百分之100 */
+      font-size: 18px; /* 增加字体大小2号 */
+      font-weight: bold; /* 字体加粗 */
+    }
+    .calendar .selected {
+      background-color: black; /* 点击时的背景颜色为黑色 */
+      color: white; /* 点击时的文本颜色为白色 */
+    }
+    .details {
+      display: none;
+      padding: 10px;
+      background-color: #f9f9f9;
+    }
+    .details.active {
+      display: block;
+    }
+    .notes {
+      margin-top: 10px;
+    }
+    .notes textarea {
+      width: 100%;
+      height: 60px;
+      margin-bottom: 10px;
+      font-size: 20px; /* 设置字体大小为20 */
+      color: blue; /* 设置字体颜色为蓝色 */
+      opacity: 1; /* 设置透明度为百分之100 */
+    }
+    .notes .add-button {
+      background-color: #ffec40; /* 设置添加按钮的背景颜色为淡黄色 */
+      color: black; /* 设置添加按钮的字体颜色为黑色 */
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    .note-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    .note-item span {
+      flex-grow: 1;
+      padding: 5px;
+      border: 1px solid #ccc;
+      margin-right: 5px;
+      font-size: 20px; /* 设置字体大小为20 */
+      color: blue; /* 设置字体颜色为蓝色 */
+      opacity: 1; /* 设置透明度为百分之100 */
+    }
+    .note-item button {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    textarea {
+      width: 100%;
+      height: 80px;
+      font-size: 20px; /* 设置字体大小为20 */
+      color: blue; /* 设置字体颜色为蓝色 */
+      opacity: 1; /* 设置透明度为百分之100 */
+    }
+  </style>
+</head>
+<body>
+  <h1>日历应用</h1>
+  <div class="calendar">
+    <table>
+      <thead>
+        <tr>
+          <th>一</th>
+          <th>二</th>
+          <th>三</th>
+          <th>四</th>
+          <th>五</th>
+          <th>六</th>
+          <th>日</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- 使用 JavaScript 动态生成日历内容 -->
+      </tbody>
+    </table>
+  </div>
+
+  <div class="details">
+    <h2 id="selected-date">日期详情</h2>
+    <div class="notes">
+      <h3>上午日程安排</h3>
+      <button onclick="toggleMorningScheduleInput()" class="add-button">添加</button>
+      <div id="morning-schedule-input" style="display: none;">
+        <textarea id="morning-schedule"></textarea>
+        <button onclick="addMorningNote()">保存</button>
+      </div>
+      <div id="morning-notes"></div>
+    </div>
+    <div class="notes">
+      <h3>下午日程安排</h3>
+      <button onclick="toggleAfternoonScheduleInput()" class="add-button">添加</button>
+      <div id="afternoon-schedule-input" style="display: none;">
+        <textarea id="afternoon-schedule"></textarea>
+        <button onclick="addAfternoonNote()">保存</button>
+      </div>
+      <div id="afternoon-notes"></div>
+    </div>
+    <h2>总结</h2>
+    <textarea id="summary"></textarea>
+  </div>
+
+  <script>
+    const startDate = new Date("2023-09-11");
+    const endDate = new Date("2023-10-07");
+    const today = new Date();
+
+    const calendarBody = document.querySelector(".calendar tbody");
+    const details = document.querySelector(".details");
+    const selectedDateElement = document.getElementById("selected-date");
+    const morningScheduleTextarea = document.getElementById("morning-schedule");
+    const afternoonScheduleTextarea = document.getElementById("afternoon-schedule");
+    const summaryTextarea = document.getElementById("summary");
+    const morningNotesDiv = document.getElementById("morning-notes");
+    const afternoonNotesDiv = document.getElementById("afternoon-notes");
+
+    let currentRow;
+    let isMorningInputVisible = false;
+    let isAfternoonInputVisible = false;
+
+    function toggleMorningScheduleInput() {
+      isMorningInputVisible = !isMorningInputVisible;
+      const morningInput = document.getElementById("morning-schedule-input");
+      if (isMorningInputVisible) {
+        morningInput.style.display = "block";
+      } else {
+        morningInput.style.display = "none";
+      }
+    }
+
+    function toggleAfternoonScheduleInput() {
+      isAfternoonInputVisible = !isAfternoonInputVisible;
+      const afternoonInput = document.getElementById("afternoon-schedule-input");
+      if (isAfternoonInputVisible) {
+        afternoonInput.style.display = "block";
+      } else {
+        afternoonInput.style.display = "none";
+      }
+    }
+
+    function addMorningNote() {
+      const noteText = morningScheduleTextarea.value.trim();
+      if (noteText) {
+        const noteItem = createNoteItem(noteText);
+        morningNotesDiv.appendChild(noteItem);
+        morningScheduleTextarea.value = "";
+        toggleMorningScheduleInput();
+        saveData();
+      }
+    }
+
+    function addAfternoonNote() {
+      const noteText = afternoonScheduleTextarea.value.trim();
+      if (noteText) {
+        const noteItem = createNoteItem(noteText);
+        afternoonNotesDiv.appendChild(noteItem);
+        afternoonScheduleTextarea.value = "";
+        toggleAfternoonScheduleInput();
+        saveData();
+      }
+    }
+
+    function deleteNoteItem(noteItem) {
+      noteItem.remove();
+      saveData();
+    }
+
+    function createNoteItem(noteText) {
+      const noteItem = document.createElement("div");
+      noteItem.classList.add("note-item");
+      const noteTextSpan = document.createElement("span");
+      noteTextSpan.textContent = noteText;
+      const deleteButton = document.createElement("button");
+      deleteButton.textContent = "删除";
+      deleteButton.onclick = () => deleteNoteItem(noteItem);
+      noteItem.appendChild(noteTextSpan);
+      noteItem.appendChild(deleteButton);
+      return noteItem;
+    }
+
+    for (let date = startDate; date <= endDate; date.setDate(date.getDate() + 1)) {
+      const dateStr = date.toISOString().split("T")[0];
+      const day = date.getDate();
+      const pastClass = date < today ? "past-day" : "";
+      const todayClass = date.toDateString() === today.toDateString() ? "today" : "";
+
+      if (!currentRow) {
+        currentRow = document.createElement("tr");
+        calendarBody.appendChild(currentRow);
+      }
+
+      const cell = document.createElement("td");
+      cell.className = `${pastClass} ${todayClass}`;
+      cell.setAttribute("data-date", dateStr);
+      cell.textContent = day;
+
+      cell.addEventListener("click", () => {
+        // 移除之前选中的单元格的样式
+        const selectedCells = document.querySelectorAll(".calendar .selected");
+        selectedCells.forEach((selectedCell) => {
+          selectedCell.classList.remove("selected");
+        });
+
+        // 添加点击单元格的样式
+        cell.classList.add("selected");
+
+        const selectedDate = cell.getAttribute("data-date");
+        const savedData = JSON.parse(localStorage.getItem(selectedDate)) || {};
+
+        selectedDateElement.textContent = `日期详情 - ${selectedDate}`;
+        morningScheduleTextarea.value = savedData.morningSchedule || "";
+        afternoonScheduleTextarea.value = savedData.afternoonSchedule || "";
+        summaryTextarea.value = savedData.summary || "";
+        loadNotes(savedData.morningNotes, morningNotesDiv);
+        loadNotes(savedData.afternoonNotes, afternoonNotesDiv);
+
+        details.classList.add("active");
+      });
+
+      currentRow.appendChild(cell);
+
+      if (date.getDay() === 0) {
+        currentRow = null; // 开始新的一行
+      }
+    }
+
+    // 监听文本框变化，保存到 localStorage
+    morningScheduleTextarea.addEventListener("input", saveData);
+    afternoonScheduleTextarea.addEventListener("input", saveData);
+    summaryTextarea.addEventListener("input", saveData);
+
+    function saveData() {
+      const selectedDate = selectedDateElement.textContent.split(" - ")[1];
+      const savedData = {
+        morningSchedule: morningScheduleTextarea.value,
+        afternoonSchedule: afternoonScheduleTextarea.value,
+        summary: summaryTextarea.value,
+        morningNotes: getNotesContent(morningNotesDiv),
+        afternoonNotes: getNotesContent(afternoonNotesDiv),
+      };
+
+      localStorage.setItem(selectedDate, JSON.stringify(savedData));
+    }
+
+    function loadNotes(notes, container) {
+      container.innerHTML = "";
+      if (notes && notes.length > 0) {
+        notes.forEach((noteText) => {
+          const noteItem = createNoteItem(noteText);
+          container.appendChild(noteItem);
+        });
+      }
+    }
+
+    function getNotesContent(container) {
+      const notes = [];
+      const noteElements = container.querySelectorAll(".note-item span");
+      noteElements.forEach((noteElement) => {
+        notes.push(noteElement.textContent);
+      });
+      return notes;
+    }
+  </script>
+</body>
+</html>
